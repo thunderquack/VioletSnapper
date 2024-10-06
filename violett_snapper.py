@@ -16,7 +16,21 @@ def capture_frame(camera, camera_id):
     else:
         print(f"Не удалось захватить кадр с камеры {camera_id}")
 
+def list_available_cameras(max_cameras=10):
+    available_cameras = []
+    for index in range(max_cameras):
+        cap = cv2.VideoCapture(index)
+        if cap.isOpened():
+            available_cameras.append(index)
+            cap.release()
+    return available_cameras        
+
 if __name__ == "__main__":
+
+    cameras = list_available_cameras()
+    if cameras:
+        print(f"Доступные камеры: {cameras}")
+
     print("Запуск захвата изображений с нескольких веб-камер...")
     try:
         while True:
