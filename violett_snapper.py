@@ -1,10 +1,6 @@
 import cv2
 import time
 
-# Инициализация видеопотоков для двух камер
-camera_0 = cv2.VideoCapture(0)
-camera_1 = cv2.VideoCapture(1)
-
 def capture_frame(camera, camera_id):
     ret, frame = camera.read()
     if ret:
@@ -26,22 +22,28 @@ def list_available_cameras(max_cameras=10):
     return available_cameras        
 
 if __name__ == "__main__":
+    # Получаем список доступных камер
+    camera_indices = list_available_cameras()
+    if not camera_indices:
+        print("Камеры не обнаружены.")
+        exit()
 
-    cameras = list_available_cameras()
-    if cameras:
-        print(f"Доступные камеры: {cameras}")
+    print(f"Доступные камеры: {camera_indices}")
+
+    # Инициализация видеопотоков для всех доступных камер
+    cameras = [cv2.VideoCapture(index) for index in camera_indices]
 
     print("Запуск захвата изображений с нескольких веб-камер...")
     try:
         while True:
             # Захват кадров с каждой камеры
-            capture_frame(camera_0, 0)
-            capture_frame(camera_1, 1)
+            for i, camera in enumerate(cameras):
+                capture_frame(camera, camera_indices[i])
             time.sleep(20)  # Захват изображений каждые 20 секунд
     except KeyboardInterrupt:
         print("Захват остановлен.")
     finally:
-        # Освобождаем видеопотоки
-        camera_0.release()
-        camera_1.release()
+        # Освобождаем все видеопотоки
+        for camera in cameras:
+            camera.release()
         cv2.destroyAllWindows()
