@@ -1,12 +1,13 @@
 import cv2
 import time
+import os
 
-def capture_frame(camera, camera_id):
+def capture_frame(camera, camera_id, save_dir):
     ret, frame = camera.read()
     if ret:
         # Сохранение кадра с временной меткой и идентификатором камеры
         timestamp = time.strftime("%Y%m%d_%H%M%S")
-        filename = f"camera_{camera_id}_{timestamp}.jpg"
+        filename = os.path.join(save_dir, f"camera_{camera_id}_{timestamp}.jpg")
         cv2.imwrite(filename, frame)
         print(f"Сохранено: {filename}")
     else:
@@ -22,6 +23,13 @@ def list_available_cameras(max_cameras=10):
     return available_cameras        
 
 if __name__ == "__main__":
+    # Указываем директорию для сохранения фотографий
+    save_directory = "captured_images"
+    
+    # Создаем директорию, если она не существует
+    if not os.path.exists(save_directory):
+        os.makedirs(save_directory)
+
     # Получаем список доступных камер
     camera_indices = list_available_cameras()
     if not camera_indices:
@@ -38,7 +46,7 @@ if __name__ == "__main__":
         while True:
             # Захват кадров с каждой камеры
             for i, camera in enumerate(cameras):
-                capture_frame(camera, camera_indices[i])
+                capture_frame(camera, camera_indices[i], save_directory)
             time.sleep(20)  # Захват изображений каждые 20 секунд
     except KeyboardInterrupt:
         print("Захват остановлен.")
