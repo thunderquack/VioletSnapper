@@ -1,6 +1,7 @@
 import cv2
 import time
 import os
+from tqdm import tqdm
 
 def capture_frame(camera, camera_id, base_save_dir):
     ret, frame = camera.read()
@@ -27,6 +28,10 @@ def list_available_cameras(max_cameras=10):
             cap.release()
     return available_cameras        
 
+def countdown_timer_with_progress(seconds):
+    for _ in tqdm(range(seconds), desc="До следующего кадра", ncols=100):
+        time.sleep(1)
+
 if __name__ == "__main__":
     # Базовая директория для сохранения фотографий
     base_save_directory = "captured_images"
@@ -52,7 +57,7 @@ if __name__ == "__main__":
             # Захват кадров с каждой камеры
             for i, camera in enumerate(cameras):
                 capture_frame(camera, camera_indices[i], base_save_directory)
-            time.sleep(20)  # Захват изображений каждые 20 секунд
+            countdown_timer_with_progress(20)  # Обратный отсчет с прогресс-баром
     except KeyboardInterrupt:
         print("Захват остановлен.")
     finally:
