@@ -2,20 +2,35 @@ import cv2
 import time
 import os
 from tqdm import tqdm
+import numpy as np
+
+def is_mostly_black(image, threshold=20, black_pixel_percentage=90):
+    """Проверяет, что изображение в основном черное.
+    threshold - порог для пикселей, которые считаются черными.
+    black_pixel_percentage - процент черных пикселей, при котором изображение считается черным.
+    """
+    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # Преобразуем в оттенки серого
+    black_pixels = np.sum(gray_image < threshold)  # Считаем пиксели с яркостью ниже порога
+    total_pixels = gray_image.size  # Общее количество пикселей
+    black_percentage = (black_pixels / total_pixels) * 100  # Процент черных пикселей
+    return black_percentage >= black_pixel_percentage
 
 def capture_frame(camera, camera_id, base_save_dir):
     ret, frame = camera.read()
     if ret:
-        # Создаем папку для каждой камеры
-        camera_save_dir = os.path.join(base_save_dir, f"camera_{camera_id}")
-        if not os.path.exists(camera_save_dir):
-            os.makedirs(camera_save_dir)
+        if is_mostly_black(frame):
+            print(f"Кадр с камеры {camera_id} в основном черный. Пропуск сохранения.")
+        else:
+            # Создаем папку для каждой камеры
+            camera_save_dir = os.path.join(base_save_dir, f"camera_{camera_id}")
+            if not os.path.exists(camera_save_dir):
+                os.makedirs(camera_save_dir)
 
-        # Сохранение кадра с временной меткой
-        timestamp = time.strftime("%Y%m%d_%H%M%S")
-        filename = os.path.join(camera_save_dir, f"{timestamp}.jpg")
-        cv2.imwrite(filename, frame)
-        print(f"Сохранено: {filename}")
+            # Сохранение кадра с временной меткой
+            timestamp = time.strftime("%Y%m%d_%H%M%S")
+            filename = os.path.join(camera_save_dir, f"{timestamp}.jpg")
+            cv2.imwrite(filename, frame)
+            print(f"Сохранено: {filename}")
     else:
         print(f"Не удалось захватить кадр с камеры {camera_id}")
 
