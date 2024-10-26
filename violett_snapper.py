@@ -3,6 +3,7 @@ import time
 import os
 from tqdm import tqdm
 import numpy as np
+from datetime import datetime
 
 def is_mostly_black(image, threshold=20, black_pixel_percentage=90):
     """Проверяет, что изображение в основном черное.
@@ -16,13 +17,15 @@ def is_mostly_black(image, threshold=20, black_pixel_percentage=90):
     return black_percentage >= black_pixel_percentage
 
 def capture_frame(camera, camera_id, base_save_dir):
+    """Захватывает кадр с камеры и сохраняет его в папку с текущей датой."""
     ret, frame = camera.read()
     if ret:
         if is_mostly_black(frame):
             print(f"Кадр с камеры {camera_id} в основном черный. Пропуск сохранения.")
         else:
-            # Создаем папку для каждой камеры
-            camera_save_dir = os.path.join(base_save_dir, f"camera_{camera_id}")
+            # Определяем текущую дату и создаем папку с датой, если она не существует
+            date_str = datetime.now().strftime("%Y-%m-%d")
+            camera_save_dir = os.path.join(base_save_dir, f"camera_{camera_id}", date_str)
             if not os.path.exists(camera_save_dir):
                 os.makedirs(camera_save_dir)
 
