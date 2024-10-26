@@ -4,26 +4,31 @@ import shutil
 from tqdm import tqdm
 
 def sort_photos_by_date(base_directory):
-    # Считаем общее количество файлов для сортировки
-    total_files = sum(len(files) for _, _, files in os.walk(base_directory))
-    
+    # Считаем общее количество файлов для сортировки (только второго уровня)
+    total_files = sum(len(files) for camera_folder in os.listdir(base_directory) 
+                      if os.path.isdir(os.path.join(base_directory, camera_folder)) 
+                      for files in [os.listdir(os.path.join(base_directory, camera_folder))])
+
     # Создаем прогресс-бар
     with tqdm(total=total_files, desc="Сортировка файлов", ncols=100) as pbar:
-        # Проходим по каждой папке камеры
-        for root, dirs, files in os.walk(base_directory):
-            for file_name in files:
-                # Игнорируем системные файлы (если есть)
-                if not file_name.endswith(".jpg"):
+        # Проходим по каждой папке камеры (второй уровень)
+        for camera_folder in os.listdir(base_directory):
+            camera_folder_path = os.path.join(base_directory, camera_folder)
+            if not os.path.isdir(camera_folder_path):
+                continue
+            
+            # Проверяем файлы только в этой папке, игнорируя третий уровень
+            for file_name in os.listdir(camera_folder_path):
+                file_path = os.path.join(camera_folder_path, file_name)
+                
+                # Игнорируем файлы, которые не являются изображениями JPG
+                if not file_name.endswith(".jpg") or not os.path.isfile(file_path):
                     pbar.update(1)
                     continue
 
-                # Получаем полный путь к файлу
-                file_path = os.path.join(root, file_name)
-
-                # Извлекаем временную метку из имени файла (формат: camera_id_YYYYMMDD_HHMMSS.jpg)
+                # Извлекаем дату из имени файла (формат: YYYYMMDD_HHMMSS.jpg)
                 try:
-                    timestamp_str = file_name.split('_')[1]  # YYYYMMDD_HHMMSS
-                    date_str = timestamp_str[:8]  # YYYYMMDD
+                    date_str = file_name.split('_')[0]  # YYYYMMDD
                     date_obj = datetime.strptime(date_str, "%Y%m%d")
                     date_folder = date_obj.strftime("%Y-%m-%d")
                 except (IndexError, ValueError):
@@ -32,8 +37,7 @@ def sort_photos_by_date(base_directory):
                     continue
 
                 # Определяем папку с датой для перемещения файла
-                camera_folder = os.path.basename(root)  # Получаем имя папки камеры (например, camera_0)
-                date_directory = os.path.join(base_directory, camera_folder, date_folder)
+                date_directory = os.path.join(camera_folder_path, date_folder)
 
                 # Создаем папку с датой, если она не существует
                 if not os.path.exists(date_directory):
